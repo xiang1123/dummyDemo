@@ -31,7 +31,9 @@
       <el-header class="header">
         <div class="header-left">欢迎来到企业级后台系统</div>
         <div class="header-right">
-          <el-button type="danger" size="small" plain>退出登录</el-button>
+          <el-button type="danger" size="small" plain @click="handelLogout"
+            >退出登录</el-button
+          >
         </div>
       </el-header>
 
@@ -45,6 +47,19 @@
 <script setup lang="ts">
 // 引入 Element Plus 的图标
 import { DataLine, Goods, User } from '@element-plus/icons-vue'
+
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '../stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+const handelLogout = () => {
+  ElMessage.success('退出登录成功')
+  userStore.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>
