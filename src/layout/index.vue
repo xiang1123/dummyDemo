@@ -5,7 +5,7 @@
         <h2>Dummy Admin</h2>
       </div>
       <el-menu
-        :default-active="$route.path"
+        default-active="/dashboard"
         class="el-menu-vertical"
         background-color="#304156"
         text-color="#bfcbd9"
@@ -16,12 +16,10 @@
           <el-icon><DataLine /></el-icon>
           <span>数据大盘</span>
         </el-menu-item>
-
         <el-menu-item v-if="userStore.isAdmin" index="/products">
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
-
         <el-menu-item v-if="userStore.isAdmin" index="/users">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
@@ -31,11 +29,44 @@
 
     <el-container>
       <el-header class="header">
-        <div class="header-left">欢迎来到企业级后台系统</div>
+        <div class="header-left">
+          <span class="welcome-text">欢迎回来！</span>
+          <span class="quote-text" v-if="dailyQuote.quote">
+            "{{ dailyQuote.quote }}" —— {{ dailyQuote.author }}
+          </span>
+        </div>
+
         <div class="header-right">
-          <el-button type="danger" size="small" plain @click="handelLogout"
-            >退出登录</el-button
-          >
+          <el-dropdown trigger="click">
+            <span class="user-profile">
+              <el-avatar :size="32" :src="userStore.userInfo.image" />
+              <span class="username">
+                {{ userStore.userInfo.firstName }}
+                {{ userStore.userInfo.lastName }}
+                <el-tag
+                  :type="userStore.isAdmin ? 'danger' : 'info'"
+                  size="small"
+                  class="role-tag"
+                >
+                  {{ userStore.isAdmin ? 'Admin' : 'Editor' }}
+                </el-tag>
+              </span>
+            </span>
+
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>个人中心</el-dropdown-item>
+                <el-dropdown-item>修改密码</el-dropdown-item>
+                <el-dropdown-item
+                  divided
+                  @click="handleLogout"
+                  style="color: #f56c6c"
+                >
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </el-header>
 
@@ -47,21 +78,32 @@
 </template>
 
 <script setup lang="ts">
-// 引入 Element Plus 的图标
-import { DataLine, Goods, User } from '@element-plus/icons-vue'
-
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
+import { getRandomQuoteAPI } from '../api/modules/system'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-const handelLogout = () => {
-  ElMessage.success('退出登录成功')
+// 名言状态
+const dailyQuote = ref({ quote: '', author: '' })
+
+// 退出登录逻辑
+const handleLogout = () => {
   userStore.logout()
   router.push('/login')
 }
+
+// 页面加载时获取名言
+onMounted(async () => {
+  try {
+    const res = await getRandomQuoteAPI()
+    dailyQuote.value = res
+  } catch (error) {
+    console.error('获取名言失败', error)
+  }
+})
 </script>
 
 <style scoped>
@@ -82,13 +124,61 @@ const handelLogout = () => {
 .el-menu-vertical {
   border-right: none;
 }
+
+/* 🌟 顶部导航样式优化 */
 .header {
   background-color: #fff;
   border-bottom: 1px solid #e6e6e6;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0 20px;
 }
+
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+}
+
+.welcome-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.quote-text {
+  font-size: 13px;
+  color: #909399;
+  font-style: italic;
+  max-width: 500px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.user-profile:hover {
+  background-color: #f5f7fa;
+}
+
+.username {
+  font-size: 14px;
+  color: #606266;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .main {
   background-color: #f0f2f5;
   padding: 20px;
