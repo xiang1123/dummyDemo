@@ -52,6 +52,12 @@
           show-overflow-tooltip
         />
         <el-table-column prop="category" label="分类" width="120" />
+        <el-table-column
+          prop="brand"
+          label="品牌"
+          width="120"
+          show-overflow-tooltip
+        />
 
         <el-table-column label="价格 ($)" width="120" sortable prop="price">
           <template #default="{ row }">
@@ -71,8 +77,16 @@
 
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" link>编辑</el-button>
-            <el-button size="small" type="danger" link>删除</el-button>
+            <el-button size="small" type="primary" link @click="handleEdit(row)"
+              >编辑</el-button
+            >
+            <el-button
+              size="small"
+              type="danger"
+              link
+              @click="handleDelete(row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -90,41 +104,126 @@
         />
       </div>
     </el-card>
+
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogType === 'add' ? '新增商品' : '编辑商品'"
+      width="500px"
+      @close="resetForm"
+    >
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-width="80px"
+      >
+        <el-form-item label="商品名称" prop="title">
+          <el-input v-model="formData.title" placeholder="请输入商品名称" />
+        </el-form-item>
+
+        <el-form-item label="分类" prop="category">
+          <el-select
+            v-model="formData.category"
+            placeholder="请选择分类"
+            style="width: 100%"
+          >
+            <el-option label="美妆 (Beauty)" value="beauty" />
+            <el-option label="香水 (Fragrances)" value="fragrances" />
+            <el-option label="家具 (Furniture)" value="furniture" />
+            <el-option label="杂货 (Groceries)" value="groceries" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="价格" prop="price">
+          <el-input-number
+            v-model="formData.price"
+            :min="0"
+            :precision="2"
+            :step="0.1"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="库存" prop="stock">
+          <el-input-number
+            v-model="formData.stock"
+            :min="0"
+            :step="1"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="品牌" prop="brand">
+          <el-input v-model="formData.brand" placeholder="请输入品牌名称" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitLoading" @click="submitForm"
+            >确定</el-button
+          >
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getProductsAPI, searchProductsAPI } from '../api/modules/product'
+import {
+  getProductsAPI,
+  searchProductsAPI,
+  addProductAPI,
+  updateProductAPI,
+  deleteProductAPI,
+} from '../api/modules/product'
 import type { Product } from '../types/product'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-// === 状态定义 ===
+// === 列表状态定义 ===
 const loading = ref(false)
 const tableData = ref<Product[]>([])
 const searchKeyword = ref('')
-
-// 分页相关状态
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-// === 核心方法 ===
-// 获取表格数据 (融合了搜索和普通列表的逻辑)
+// === 弹窗与表单状态定义 ===
+const dialogVisible = ref(false)
+const dialogType = ref<'add' | 'edit'>('add')
+const submitLoading = ref(false)
+const formRef = ref()
+
+// 表单数据绑定 (Partial 允许只填部分字段)
+const formData = ref<Partial<Product>>({
+  title: '',
+  category: '',
+  price: 0,
+  stock: 0,
+  brand: '',
+})
+
+// 表单必填校验规则
+const formRules = {
+  title: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
+  category: [{ required: true, message: '请选择分类', trigger: 'change' }],
+  price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
+  stock: [{ required: true, message: '请输入库存', trigger: 'blur' }],
+}
+
+// === 核心方法：获取表格数据 ===
 const fetchTableData = async () => {
   loading.value = true
   try {
-    // 核心思路：后端分页的 skip = (当前页码 - 1) * 每页条数
     const skip = (currentPage.value - 1) * pageSize.value
     let res
-
-    // 如果搜索框有值，就调搜索接口；否则调普通的列表接口
     if (searchKeyword.value.trim()) {
       res = await searchProductsAPI(searchKeyword.value, pageSize.value, skip)
     } else {
       res = await getProductsAPI(pageSize.value, skip)
     }
-
     tableData.value = res.products
     total.value = res.total
   } catch (error) {
@@ -134,29 +233,98 @@ const fetchTableData = async () => {
   }
 }
 
-// 搜索按钮点击事件
+// === 分页与搜索事件 ===
 const handleSearch = () => {
-  // 每次触发搜索，一定要把页码重置为第一页，否则会查不到数据
   currentPage.value = 1
   fetchTableData()
 }
-
-// 分页：每页条数变化时触发
 const handleSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
   fetchTableData()
 }
-
-// 分页：点击页码时触发
 const handleCurrentChange = (page: number) => {
   currentPage.value = page
   fetchTableData()
 }
 
-// 留给下一步的方法
+// === 增删改核心逻辑 ===
+
+// 1. 打开新增弹窗
 const openAddDialog = () => {
-  ElMessage.info('新增商品功能即将在下一步完成！')
+  dialogType.value = 'add'
+  // 清空表单
+  formData.value = { title: '', category: '', price: 0, stock: 0, brand: '' }
+  dialogVisible.value = true
+}
+
+// 2. 打开编辑弹窗
+const handleEdit = (row: Product) => {
+  dialogType.value = 'edit'
+  // 重点：使用深拷贝，防止在弹窗里输入时直接修改了底层表格的数据
+  formData.value = JSON.parse(JSON.stringify(row))
+  dialogVisible.value = true
+}
+
+// 3. 删除商品
+const handleDelete = (row: Product) => {
+  ElMessageBox.confirm(`确定要删除商品 "${row.title}" 吗？`, '高危操作', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async () => {
+      try {
+        await deleteProductAPI(row.id)
+        ElMessage.success('商品删除成功！')
+        fetchTableData() // 删除后刷新列表
+      } catch (error) {
+        console.error('删除失败', error)
+      }
+    })
+    .catch(() => {
+      /* 取消删除 */
+    })
+}
+
+// 4. 提交表单 (新增 或 修改)
+const submitForm = async () => {
+  if (!formRef.value) return
+  await formRef.value.validate(async (valid: boolean) => {
+    if (valid) {
+      submitLoading.value = true
+      try {
+        const updatePayload = {
+          title: formData.value.title,
+          category: formData.value.category,
+          price: formData.value.price,
+          stock: formData.value.stock,
+          brand: formData.value.brand,
+        }
+        if (dialogType.value === 'add') {
+          await addProductAPI(updatePayload)
+          ElMessage.success('新增商品成功！')
+        } else {
+          // 这里 formData.value.id 必然存在，因为是从表格点击编辑进来的
+          await updateProductAPI(formData.value.id!, updatePayload)
+          ElMessage.success('修改商品成功！')
+        }
+        dialogVisible.value = false
+        fetchTableData() // 刷新列表
+      } catch (error) {
+        console.error('提交失败', error)
+      } finally {
+        submitLoading.value = false
+      }
+    }
+  })
+}
+
+// 5. 弹窗关闭时重置表单红色的校验提示
+const resetForm = () => {
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 // 初始化加载
@@ -171,13 +339,11 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
 }
-
 .action-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .pagination-wrapper {
   margin-top: 20px;
   display: flex;
