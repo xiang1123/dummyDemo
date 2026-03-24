@@ -55,8 +55,8 @@
 
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人中心</el-dropdown-item>
-                <el-dropdown-item>修改密码</el-dropdown-item>
+                <!-- <el-dropdown-item>个人中心</el-dropdown-item>
+                <el-dropdown-item>修改密码</el-dropdown-item> -->
                 <el-dropdown-item
                   divided
                   @click="handleLogout"
@@ -78,10 +78,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { getRandomQuoteAPI } from '../api/modules/system'
+import { DataLine, Goods, User } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
