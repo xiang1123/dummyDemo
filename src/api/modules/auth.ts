@@ -8,6 +8,6 @@ export const loginAPI = (data: LoginData) => {
 export const refreshTokenAPI = (refreshToken: string) => {
   return http.post<any, LoginResponse>('/auth/refresh', {
     refreshToken,
-    expiresInMins: 60
+    expiresInMins: 180
   })
 }

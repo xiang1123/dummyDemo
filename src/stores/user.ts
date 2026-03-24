@@ -14,7 +14,7 @@ export const useUserStore = defineStore('user', () => {
     accessToken.value = data.accessToken
     refreshToken.value = data.refreshToken
     userInfo.value = data
-    localStorage.setItem('dumy_token', data.accessToken)
+    localStorage.setItem('dummy_access_token', data.accessToken)
     localStorage.setItem('dummy_refresh_token', data.refreshToken)
     localStorage.setItem('dummy_user', JSON.stringify(data))
   }
@@ -23,7 +23,7 @@ export const useUserStore = defineStore('user', () => {
     accessToken.value = ''
     refreshToken.value = ''
     userInfo.value = {}
-    localStorage.removeItem('dumy_token')
+    localStorage.removeItem('dummy_access_token')
     localStorage.removeItem('dummy_refresh_token')
     localStorage.removeItem('dummy_user')
   }

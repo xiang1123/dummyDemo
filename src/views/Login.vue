@@ -74,7 +74,7 @@ const handleLogin = async () => {
         const res = await loginAPI({
           username: form.username,
           password: form.password,
-          expiresInMins: 60,
+          expiresInMins: 180,
         })
         userStore.setLoginData(res)
         ElMessage.success('登录成功')
