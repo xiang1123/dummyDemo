@@ -23,65 +23,30 @@
     </el-card>
 
     <el-card class="table-card" shadow="never">
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        border
-        stripe
-        style="width: 100%"
-        height="calc(100vh - 320px)"
-      >
-        <el-table-column prop="id" label="ID" width="80" align="center" />
+      <ProTable :data="tableData" :loading="loading" :columns="tableColumns">
+        <template #avatar="{ row }">
+          <el-avatar :size="40" :src="row.image" />
+        </template>
 
-        <el-table-column label="头像" width="80" align="center">
-          <template #default="{ row }">
-            <el-avatar :size="40" :src="row.image" />
-          </template>
-        </el-table-column>
+        <template #name="{ row }">
+          <strong>{{ row.firstName }} {{ row.lastName }}</strong>
+        </template>
 
-        <el-table-column label="姓名" min-width="150">
-          <template #default="{ row }">
-            <strong>{{ row.firstName }} {{ row.lastName }}</strong>
-          </template>
-        </el-table-column>
+        <template #role="{ row }">
+          <el-tag :type="row.role === 'admin' ? 'danger' : 'info'">
+            {{ row.role === 'admin' ? '管理员' : '普通员工' }}
+          </el-tag>
+        </template>
 
-        <el-table-column prop="username" label="登录账号" width="120" />
-        <el-table-column
-          prop="email"
-          label="邮箱"
-          min-width="200"
-          show-overflow-tooltip
-        />
-        <el-table-column prop="phone" label="联系电话" width="150" />
-
-        <el-table-column
-          prop="role"
-          label="系统角色"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag :type="row.role === 'admin' ? 'danger' : 'info'">
-              {{ row.role === 'admin' ? '管理员' : '普通员工' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="操作" width="180" align="center" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" type="primary" link @click="handleEdit(row)"
-              >编辑</el-button
-            >
-            <el-button
-              size="small"
-              type="danger"
-              link
-              @click="handleDelete(row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+        <template #action="{ row }">
+          <el-button size="small" type="primary" link @click="handleEdit(row)"
+            >编辑</el-button
+          >
+          <el-button size="small" type="danger" link @click="handleDelete(row)"
+            >删除</el-button
+          >
+        </template>
+      </ProTable>
 
       <Pagination
         v-model:current-page="currentPage"
@@ -148,7 +113,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import {
   getUsersAPI,
   searchUsersAPI,
@@ -157,8 +121,21 @@ import {
   deleteUserAPI,
 } from '../api/modules/user'
 import type { User } from '../types/user'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import Pagination from '../components/Pagination.vue'
+
+const tableColumns = [
+  { prop: 'id', label: 'ID', width: 80 },
+  // 特殊列：使用 avatar 插槽
+  { label: '头像', width: 80, slot: 'avatar' },
+  // 特殊列：使用 name 插槽
+  { label: '姓名', minWidth: 150, slot: 'name' },
+  { prop: 'username', label: '登录账号', width: 120 },
+  { prop: 'email', label: '邮箱', minWidth: 200 },
+  { prop: 'phone', label: '联系电话', width: 150 },
+  // 特殊列：使用 role 插槽
+  { label: '系统角色', width: 100, slot: 'role' },
+  // 特殊列：使用 action 插槽 (固定在右侧)
+  { label: '操作', width: 180, fixed: 'right', slot: 'action' },
+]
 
 // 列表与分页状态
 const loading = ref(false)

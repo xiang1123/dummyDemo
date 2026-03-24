@@ -23,73 +23,38 @@
     </el-card>
 
     <el-card class="table-card" shadow="never">
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        border
-        stripe
-        style="width: 100%"
-        height="calc(100vh - 320px)"
-      >
-        <el-table-column prop="id" label="ID" width="80" align="center" />
+      <ProTable :data="tableData" :loading="loading" :columns="tableColumns">
+        <template #image="{ row }">
+          <el-image
+            style="width: 50px; height: 50px; border-radius: 4px"
+            :src="row.thumbnail"
+            :preview-src-list="row.images"
+            preview-teleported
+            fit="cover"
+          />
+        </template>
 
-        <el-table-column label="商品图片" width="100" align="center">
-          <template #default="{ row }">
-            <el-image
-              style="width: 50px; height: 50px; border-radius: 4px"
-              :src="row.thumbnail"
-              :preview-src-list="row.images"
-              preview-teleported
-              fit="cover"
-            />
-          </template>
-        </el-table-column>
+        <template #price="{ row }">
+          <span style="color: #f56c6c; font-weight: bold"
+            >${{ row.price }}</span
+          >
+        </template>
 
-        <el-table-column
-          prop="title"
-          label="商品名称"
-          min-width="180"
-          show-overflow-tooltip
-        />
-        <el-table-column prop="category" label="分类" width="120" />
-        <el-table-column
-          prop="brand"
-          label="品牌"
-          width="120"
-          show-overflow-tooltip
-        />
+        <template #stock="{ row }">
+          <el-tag :type="row.stock > 20 ? 'success' : 'danger'">
+            {{ row.stock }}
+          </el-tag>
+        </template>
 
-        <el-table-column label="价格 ($)" width="120" sortable prop="price">
-          <template #default="{ row }">
-            <span style="color: #f56c6c; font-weight: bold"
-              >${{ row.price }}</span
-            >
-          </template>
-        </el-table-column>
-
-        <el-table-column prop="stock" label="库存" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.stock > 20 ? 'success' : 'danger'">
-              {{ row.stock }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="操作" width="180" align="center" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" type="primary" link @click="handleEdit(row)"
-              >编辑</el-button
-            >
-            <el-button
-              size="small"
-              type="danger"
-              link
-              @click="handleDelete(row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+        <template #action="{ row }">
+          <el-button size="small" type="primary" link @click="handleEdit(row)"
+            >编辑</el-button
+          >
+          <el-button size="small" type="danger" link @click="handleDelete(row)"
+            >删除</el-button
+          >
+        </template>
+      </ProTable>
 
       <Pagination
         v-model:current-page="currentPage"
@@ -165,7 +130,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import {
   getProductsAPI,
   searchProductsAPI,
@@ -174,8 +138,18 @@ import {
   deleteProductAPI,
 } from '../api/modules/product'
 import type { Product } from '../types/product'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import Pagination from '../components/Pagination.vue'
+
+// 定义表格的列配置 (区分纯文本和自定义UI)
+const tableColumns = [
+  { prop: 'id', label: 'ID', width: 80 }, // 纯文本，用 prop
+  { label: '商品图片', width: 100, slot: 'image' }, // 需要用 el-image，用 slot
+  { prop: 'title', label: '商品名称', minWidth: 180 }, // 纯文本，用 prop
+  { prop: 'category', label: '分类', width: 120 }, // 纯文本，用 prop
+  { prop: 'brand', label: '品牌', width: 120 }, // 纯文本，用 prop
+  { label: '价格 ($)', width: 120, slot: 'price' }, // 需要红色加粗，用 slot
+  { label: '库存', width: 100, slot: 'stock' }, // 需要不同颜色的 el-tag，用 slot
+  { label: '操作', width: 180, fixed: 'right', slot: 'action' }, // 需要按钮，用 slot
+]
 
 // === 列表状态定义 ===
 const loading = ref(false)

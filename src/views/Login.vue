@@ -45,9 +45,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '../stores/user'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { reactive, ref } from 'vue'
+
 import { loginAPI } from '../api/modules/auth'
 
 const router = useRouter()

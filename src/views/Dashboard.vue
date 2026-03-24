@@ -39,7 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, reactive } from 'vue'
 import * as echarts from 'echarts'
 import { getStatsAPI, getChartDataAPI } from '../api/modules/dashboard'
 
