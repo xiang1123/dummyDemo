@@ -34,6 +34,11 @@ const router = createRouter({
           meta: { requireAdmin: true }
         }
       ]
+    },
+    {
+      path: '/:pathMatch(.*)*', // 正则匹配所有未定义的路径
+      name: 'NotFound',
+      component: () => import('../views/NotFound.vue') // 我们马上建这个文件
     }
   ]
 })
