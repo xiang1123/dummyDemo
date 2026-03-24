@@ -8,6 +8,10 @@ const http = axios.create({
   timeout: 10000,
 })
 
+/**
+ * 全局变量，用于标记当前是否正在刷新访问令牌
+ * 当值为true时，表示正在刷新令牌；当值为false时，表示未在刷新令牌
+ */
 let isRefreshing = false
 let requestsQueue: Array<() => void> = []
 
