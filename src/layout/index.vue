@@ -5,7 +5,7 @@
         <h2>Dummy Admin</h2>
       </div>
       <el-menu
-        default-active="/dashboard"
+        :default-active="$route.path"
         class="el-menu-vertical"
         background-color="#304156"
         text-color="#bfcbd9"
