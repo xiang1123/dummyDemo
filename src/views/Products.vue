@@ -91,18 +91,12 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50]"
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+      <Pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        @change="fetchTableData"
+      />
     </el-card>
 
     <el-dialog
@@ -181,6 +175,7 @@ import {
 } from '../api/modules/product'
 import type { Product } from '../types/product'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import Pagination from '../components/Pagination.vue'
 
 // === 列表状态定义 ===
 const loading = ref(false)
@@ -236,15 +231,6 @@ const fetchTableData = async () => {
 // === 分页与搜索事件 ===
 const handleSearch = () => {
   currentPage.value = 1
-  fetchTableData()
-}
-const handleSizeChange = (size: number) => {
-  pageSize.value = size
-  currentPage.value = 1
-  fetchTableData()
-}
-const handleCurrentChange = (page: number) => {
-  currentPage.value = page
   fetchTableData()
 }
 
