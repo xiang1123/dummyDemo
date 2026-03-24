@@ -38,6 +38,7 @@
       </el-form>
 
       <div class="tips">测试账号: emilys / emilyspass</div>
+      <div class="tips">测试账号: michaelw / michaelwpass</div>
     </el-card>
   </div>
 </template>

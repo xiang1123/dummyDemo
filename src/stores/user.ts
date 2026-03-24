@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { LoginResponse } from '../types/auth'
 
 export const useUserStore = defineStore('user', () => {
@@ -9,6 +9,10 @@ export const useUserStore = defineStore('user', () => {
   const userInfo = ref<Partial<LoginResponse>>(
     JSON.parse(localStorage.getItem('dummy_user') || '{}'),
   )
+
+  const isAdmin = computed(() => {
+    return userInfo.value.username === 'emilys'
+  })
 
   const setLoginData = (data: LoginResponse) => {
     accessToken.value = data.accessToken
@@ -28,5 +32,5 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('dummy_user')
   }
 
-  return { accessToken, refreshToken, userInfo, setLoginData, logout }
+  return { accessToken, refreshToken, userInfo, isAdmin, setLoginData, logout }
 })

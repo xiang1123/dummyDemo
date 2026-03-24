@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '../layout/index.vue'
 import { useUserStore } from '../stores/user'
+import { ElMessage } from 'element-plus'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -23,12 +24,14 @@ const router = createRouter({
         {
           path: 'users',
           name: 'users',
-          component: () => import('../views/User.vue')
+          component: () => import('../views/User.vue'),
+          meta: { requireAdmin: true }
         },
         {
           path: 'products',
           name: 'Products',
-          component: () => import('../views/Products.vue')
+          component: () => import('../views/Products.vue'),
+          meta: { requireAdmin: true }
         }
       ]
     }
@@ -44,7 +47,12 @@ router.beforeEach((to, _from, next) => {
   } else if (!token) {
     next('/login')
   } else {
-    next()
+    if (to.meta.requireAdmin && !userStore.isAdmin) {
+      ElMessage.error('无权限访问')
+      next('/dashboard')
+    } else {
+      next()
+    }
   }
 })
 
