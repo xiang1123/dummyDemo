@@ -48,6 +48,11 @@ const router = createRouter({
           name: 'Comments',
           component: () => import('../views/Comments.vue')
         },
+        {
+          path: 'todos',
+          name: 'Todos',
+          component: () => import('../views/Todos.vue')
+        },
       ]
     },
     {

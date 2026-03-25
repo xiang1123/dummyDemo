@@ -36,6 +36,10 @@
           <el-icon><KnifeFork /></el-icon>
           <span>评论管理</span>
         </el-menu-item>
+        <el-menu-item index="/todos">
+          <el-icon><Checked /></el-icon>
+          <span>待办管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -98,6 +102,7 @@ import {
   User,
   Document,
   KnifeFork,
+  Checked,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
