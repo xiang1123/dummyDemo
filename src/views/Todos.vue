@@ -81,6 +81,7 @@ import {
   updateTodoAPI,
   deleteTodoAPI,
 } from '../api/modules/todo'
+import { logError } from '../utils/error'
 
 const loading = ref(false)
 const tableData = ref<Todo[]>([])
@@ -145,7 +146,7 @@ const fetchTableData = async () => {
     tableData.value = res.todos
     total.value = res.total
   } catch (error) {
-    console.error('获取待办失败', error)
+    logError('获取待办失败', error)
   } finally {
     loading.value = false
   }
@@ -207,7 +208,7 @@ const submitForm = async () => {
     dialogVisible.value = false
     fetchTableData()
   } catch (error) {
-    console.error('提交待办失败', error)
+    logError('提交待办失败', error)
   } finally {
     submitLoading.value = false
   }
@@ -220,7 +221,7 @@ const handleToggle = async (row: Todo, value: string | number | boolean) => {
     row.completed = nextCompleted
     ElMessage.success('状态更新成功')
   } catch (error) {
-    console.error('切换状态失败', error)
+    logError('切换状态失败', error)
     fetchTableData()
   }
 }

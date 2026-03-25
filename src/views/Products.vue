@@ -138,6 +138,7 @@ import {
   deleteProductAPI,
 } from '../api/modules/product'
 import type { Product } from '../types/product'
+import { logError } from '../utils/error'
 
 // 定义表格的列配置 (区分纯文本和自定义UI)
 const tableColumns = [
@@ -196,7 +197,7 @@ const fetchTableData = async () => {
     tableData.value = res.products
     total.value = res.total
   } catch (error) {
-    console.error('获取商品列表失败', error)
+    logError('获取商品列表失败', error)
   } finally {
     loading.value = false
   }
@@ -239,7 +240,7 @@ const handleDelete = (row: Product) => {
         ElMessage.success('商品删除成功！')
         fetchTableData() // 删除后刷新列表
       } catch (error) {
-        console.error('删除失败', error)
+        logError('删除失败', error)
       }
     })
     .catch(() => {
@@ -272,7 +273,7 @@ const submitForm = async () => {
         dialogVisible.value = false
         fetchTableData() // 刷新列表
       } catch (error) {
-        console.error('提交失败', error)
+        logError('提交失败', error)
       } finally {
         submitLoading.value = false
       }

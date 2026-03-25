@@ -34,6 +34,7 @@ import {
 } from '../api/modules/comment'
 import { Delete } from '@element-plus/icons-vue'
 import type { Comment } from '../types/comment'
+import { logError } from '../utils/error'
 
 const tableData = ref<Comment[]>([])
 const loading = ref(false)
@@ -83,7 +84,7 @@ const fetchTableData = async () => {
     tableData.value = res.comments
     total.value = res.total
   } catch (error) {
-    console.error('获取评论失败', error)
+    logError('获取评论失败', error)
   } finally {
     loading.value = false
   }

@@ -122,6 +122,7 @@
 <script setup lang="ts">
 import { getPostsAPI, searchPostsAPI, deletePostAPI } from '../api/modules/post'
 import type { Post } from '../types/post'
+import { logError } from '../utils/error'
 
 const loading = ref(false)
 const tableData = ref<Post[]>([])
@@ -159,7 +160,7 @@ const fetchTableData = async () => {
     tableData.value = res.posts
     total.value = res.total
   } catch (error) {
-    console.error('获取帖子失败', error)
+    logError('获取帖子失败', error)
   } finally {
     loading.value = false
   }

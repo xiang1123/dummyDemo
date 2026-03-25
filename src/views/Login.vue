@@ -47,6 +47,7 @@
 import { useUserStore } from '../stores/user'
 
 import { loginAPI } from '../api/modules/auth'
+import { logError } from '../utils/error'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -79,7 +80,7 @@ const handleLogin = async () => {
         ElMessage.success('登录成功')
         router.push('/dashboard')
       } catch (error) {
-        console.error('登录流程中断', error)
+        logError('登录流程中断', error)
       } finally {
         loading.value = false
       }

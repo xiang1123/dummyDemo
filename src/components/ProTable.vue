@@ -35,10 +35,12 @@
 </template>
 
 <script setup lang="ts">
+import type { TableColumn } from '../types/table'
+
 // 定义接收的属性
 defineProps<{
-  data: any[] // 表格数据
+  data: Record<string, unknown>[] // 表格数据
   loading?: boolean // 加载状态
-  columns: any[] // 核心：列配置数组
+  columns: TableColumn[] // 核心：列配置数组
 }>()
 </script>

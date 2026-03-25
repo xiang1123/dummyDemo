@@ -12,12 +12,12 @@
     >
       <el-form-item
         v-for="col in searchColumns"
-        :key="col.prop"
+        :key="col.prop || col.label"
         :label="col.label"
       >
         <el-input
           v-if="!col.search?.type || col.search?.type === 'input'"
-          v-model="searchParam[col.prop]"
+          v-model="searchParam[col.prop as string]"
           :placeholder="`请输入${col.label}`"
           clearable
           @keyup.enter.prevent="handleSearch"
@@ -25,14 +25,14 @@
 
         <el-select
           v-if="col.search?.type === 'select'"
-          v-model="searchParam[col.prop]"
+          v-model="searchParam[col.prop as string]"
           :placeholder="`请选择${col.label}`"
           clearable
           style="width: 180px"
         >
           <el-option
             v-for="opt in col.search.options"
-            :key="opt.value"
+            :key="String(opt.value)"
             :label="opt.label"
             :value="opt.value"
           />
@@ -55,17 +55,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
+import type { TableColumn } from '../types/table'
 
 // 1. 接收表格列配置 (单向传递即可)
 const props = defineProps<{
-  columns: any[]
+  columns: TableColumn[]
 }>()
 
 // 2. 🌟 核心修复：使用 defineModel 完美接管 v-model:search-param
 // 这保证了内部的 el-select 和外部页面的 ref 对象保持 100% 的响应式同步
-const searchParam = defineModel<Record<string, any>>('searchParam', {
+const searchParam = defineModel<Record<string, string | number>>(
+  'searchParam',
+  {
   default: () => ({}),
-})
+  },
+)
 
 // 3. 定义组件向外抛出的事件
 const emit = defineEmits(['search', 'reset'])

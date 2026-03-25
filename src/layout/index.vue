@@ -96,6 +96,7 @@
 <script setup lang="ts">
 import { useUserStore } from '../stores/user'
 import { getRandomQuoteAPI } from '../api/modules/system'
+import { logError } from '../utils/error'
 import {
   DataLine,
   Goods,
@@ -124,7 +125,7 @@ onMounted(async () => {
     const res = await getRandomQuoteAPI()
     dailyQuote.value = res
   } catch (error) {
-    console.error('获取名言失败', error)
+    logError('获取名言失败', error)
   }
 })
 </script>

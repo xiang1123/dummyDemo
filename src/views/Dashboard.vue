@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import * as echarts from 'echarts'
 import { getStatsAPI, getChartDataAPI } from '../api/modules/dashboard'
+import { logError } from '../utils/error'
 
 const stats = reactive({
   productCount: 0,
@@ -61,7 +62,7 @@ const initData = async () => {
     const chartRes = await getChartDataAPI()
     renderChart(chartRes.products)
   } catch (error) {
-    console.error('获取大盘数据失败', error)
+    logError('获取大盘数据失败', error)
   }
 }
 

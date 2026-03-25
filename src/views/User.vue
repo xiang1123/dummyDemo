@@ -121,6 +121,7 @@ import {
   deleteUserAPI,
 } from '../api/modules/user'
 import type { User } from '../types/user'
+import { logError } from '../utils/error'
 
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 },
@@ -188,7 +189,7 @@ const fetchTableData = async () => {
     tableData.value = res.users
     total.value = res.total
   } catch (error) {
-    console.error('获取用户列表失败', error)
+    logError('获取用户列表失败', error)
   } finally {
     loading.value = false
   }
@@ -235,7 +236,7 @@ const handleDelete = (row: User) => {
         ElMessage.success('员工已成功移除！')
         fetchTableData()
       } catch (error) {
-        console.error('删除失败', error)
+        logError('删除失败', error)
       }
     })
     .catch(() => {})
@@ -266,7 +267,7 @@ const submitForm = async () => {
         dialogVisible.value = false
         fetchTableData()
       } catch (error) {
-        console.error('提交失败', error)
+        logError('提交失败', error)
       } finally {
         submitLoading.value = false
       }

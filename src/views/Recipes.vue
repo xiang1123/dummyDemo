@@ -258,6 +258,7 @@ import {
   updateRecipeAPI,
   deleteRecipeAPI,
 } from '../api/modules/recipe'
+import { logError } from '../utils/error'
 
 const loading = ref(false)
 const tableData = ref<Recipe[]>([])
@@ -350,7 +351,7 @@ const fetchTableData = async () => {
     tableData.value = finalData
     total.value = res.total // (注：由于前端过滤了数组，这里的总条数可能会有些许误差，企业实战中最好还是逼后端改接口)
   } catch (error) {
-    console.error('获取食谱失败', error)
+    logError('获取食谱失败', error)
   } finally {
     loading.value = false
   }
@@ -448,7 +449,7 @@ const submitForm = async () => {
       ElMessage.warning('接口未找到该 ID，已在本地列表更新')
       return
     }
-    console.error('保存失败', error)
+    logError('保存失败', error)
   } finally {
     submitLoading.value = false
   }
