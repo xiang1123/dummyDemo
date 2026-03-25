@@ -44,6 +44,7 @@ declare module 'vue' {
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
     Pagination: typeof import('./components/Pagination.vue')['default']
+    ProSearch: typeof import('./components/ProSearch.vue')['default']
     ProTable: typeof import('./components/ProTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

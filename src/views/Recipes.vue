@@ -1,22 +1,15 @@
 <template>
   <div class="recipe-container">
-    <el-card class="action-card" shadow="never">
-      <div class="action-bar">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="请输入菜谱名称搜索..."
-          clearable
-          @clear="handleSearch"
-          @keyup.enter="handleSearch"
-          style="width: 300px"
-        >
-          <template #append>
-            <el-button @click="handleSearch">搜索</el-button>
-          </template>
-        </el-input>
-        <el-button type="primary" @click="handleAdd">+ 新增食谱</el-button>
-      </div>
-    </el-card>
+    <ProSearch
+      :columns="tableColumns"
+      v-model:search-param="searchParam"
+      @search="handleSearch"
+      @reset="handleReset"
+    >
+      <template #action>
+        <el-button type="success" @click="handleAdd">+ 新增食谱</el-button>
+      </template>
+    </ProSearch>
 
     <el-card class="table-card" shadow="never">
       <ProTable :data="tableData" :loading="loading" :columns="tableColumns">
@@ -65,7 +58,7 @@
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :total="total"
-        @change="fetchRecipes"
+        @change="fetchTableData"
       />
     </el-card>
 
@@ -279,6 +272,11 @@ const isEdit = ref(false)
 const submitLoading = ref(false)
 const editingId = ref<number | null>(null)
 
+const searchParam = ref({
+  name: '',
+  difficulty: '',
+})
+
 // 🌟 核心：表单数据模型
 const formData = ref({
   id: 0,
@@ -294,37 +292,64 @@ const formData = ref({
 
 // 定义表格列配置
 const tableColumns = [
-  // 1. 纯数据列 (看 types)
   { prop: 'id', label: 'ID', width: 80 },
-
-  // 2. 自定义UI列：图片 (看 template 的 #image)
   { label: '菜品主图', width: 100, slot: 'image' },
-
-  // 3. 纯数据列 (看 types)
-  { prop: 'name', label: '菜名', minWidth: 160, tooltip: true },
+  {
+    prop: 'name',
+    label: '菜名',
+    minWidth: 160,
+    // 🌟 加上这个，ProSearch 就会自动生成一个名称输入框！
+    search: { type: 'input' },
+  },
   { prop: 'cuisine', label: '菜系', width: 120 },
-  { prop: 'difficulty', label: '难度', width: 100 },
-  { prop: 'rating', label: '评分', width: 80 },
-
-  // 4. 自定义UI列：餐食类型 Tag (看 template 的 #mealType)
+  {
+    prop: 'difficulty',
+    label: '难度',
+    width: 100,
+    // 🌟 加上这个，ProSearch 就会自动生成一个下拉框！
+    search: {
+      type: 'select',
+      options: [
+        { label: '简单', value: 'Easy' },
+        { label: '中等', value: 'Medium' },
+        { label: '困难', value: 'Hard' },
+      ],
+    },
+  },
   { label: '餐食类型', minWidth: 160, slot: 'mealType' },
-
-  // 5. 自定义UI列：操作按钮 (看 template 的 #action)
   { label: '操作', width: 220, fixed: 'right', slot: 'action' },
 ]
 
-const fetchRecipes = async () => {
+const fetchTableData = async () => {
   loading.value = true
   try {
     const skip = (currentPage.value - 1) * pageSize.value
     let res
-    if (searchKeyword.value.trim()) {
-      res = await searchRecipesAPI(searchKeyword.value, pageSize.value, skip)
+
+    const keyword = searchParam.value.name?.trim()
+
+    if (keyword) {
+      res = await searchRecipesAPI(keyword, pageSize.value, skip)
     } else {
       res = await getRecipesAPI(pageSize.value, skip)
     }
-    tableData.value = res.recipes
-    total.value = res.total
+
+    // 🌟 拿到后端返回的原始数组
+    let finalData = res.recipes
+
+    // 🌟 核心魔法：前端弥补后端的不足！
+    // 检查用户是不是在下拉框里选了“难度”
+    const selectedDifficulty = searchParam.value.difficulty
+    if (selectedDifficulty) {
+      // 用 JS 把不符合难度的数据强行筛掉！
+      finalData = finalData.filter(
+        (item) => item.difficulty === selectedDifficulty,
+      )
+    }
+
+    // 🌟 最后把过滤完的数据喂给表格
+    tableData.value = finalData
+    total.value = res.total // (注：由于前端过滤了数组，这里的总条数可能会有些许误差，企业实战中最好还是逼后端改接口)
   } catch (error) {
     console.error('获取食谱失败', error)
   } finally {
@@ -334,7 +359,14 @@ const fetchRecipes = async () => {
 
 const handleSearch = () => {
   currentPage.value = 1
-  fetchRecipes()
+  // 在真实项目中，你会把 searchParam.value 传给后端的 API
+  console.log('当前搜索条件：', searchParam.value)
+  fetchTableData()
+}
+
+const handleReset = () => {
+  currentPage.value = 1
+  fetchTableData()
 }
 
 const addIngredient = () => formData.value.ingredients.push('')
@@ -401,7 +433,7 @@ const submitForm = async () => {
       ElMessage.success('添加成功')
     }
     formDrawerVisible.value = false
-    fetchRecipes()
+    fetchTableData()
   } catch (error) {
     const message = (error as any)?.response?.data?.message || ''
     if (
@@ -432,7 +464,7 @@ const handleDelete = async (recipe: Recipe) => {
     .then(async () => {
       await deleteRecipeAPI(recipe.id)
       ElMessage.success('删除成功')
-      fetchRecipes()
+      fetchTableData()
     })
     .catch(() => {})
 }
@@ -443,7 +475,7 @@ const handleViewDetail = (recipe: Recipe) => {
 }
 
 onMounted(() => {
-  fetchRecipes()
+  fetchTableData()
 })
 </script>
 
