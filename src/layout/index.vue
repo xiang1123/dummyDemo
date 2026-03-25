@@ -33,7 +33,7 @@
           <span>食谱管理</span>
         </el-menu-item>
         <el-menu-item index="/comments">
-          <el-icon><KnifeFork /></el-icon>
+          <el-icon><ChatDotRound /></el-icon>
           <span>评论管理</span>
         </el-menu-item>
         <el-menu-item index="/todos">
@@ -102,6 +102,7 @@ import {
   User,
   Document,
   KnifeFork,
+  ChatDotRound,
   Checked,
 } from '@element-plus/icons-vue'
 
