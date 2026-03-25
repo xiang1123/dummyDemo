@@ -29,7 +29,7 @@
           <span>内容管理</span>
         </el-menu-item>
         <el-menu-item index="/recipes">
-          <el-icon><Document /></el-icon>
+          <el-icon><KnifeFork /></el-icon>
           <span>食谱管理</span>
         </el-menu-item>
       </el-menu>
@@ -88,7 +88,13 @@
 <script setup lang="ts">
 import { useUserStore } from '../stores/user'
 import { getRandomQuoteAPI } from '../api/modules/system'
-import { DataLine, Goods, User, Document } from '@element-plus/icons-vue'
+import {
+  DataLine,
+  Goods,
+  User,
+  Document,
+  KnifeFork,
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
