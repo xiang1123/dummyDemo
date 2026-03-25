@@ -5,7 +5,7 @@
         <h2>Dummy Admin</h2>
       </div>
       <el-menu
-        default-active="/dashboard"
+        :default-active="$route.path"
         class="el-menu-vertical"
         background-color="#304156"
         text-color="#bfcbd9"
@@ -23,6 +23,10 @@
         <el-menu-item v-if="userStore.isAdmin" index="/users">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
+        </el-menu-item>
+        <el-menu-item index="/posts">
+          <el-icon><Document /></el-icon>
+          <span>内容管理</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -80,7 +84,7 @@
 <script setup lang="ts">
 import { useUserStore } from '../stores/user'
 import { getRandomQuoteAPI } from '../api/modules/system'
-import { DataLine, Goods, User } from '@element-plus/icons-vue'
+import { DataLine, Goods, User, Document } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()

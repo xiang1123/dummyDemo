@@ -32,7 +32,12 @@ const router = createRouter({
           name: 'Products',
           component: () => import('../views/Products.vue'),
           meta: { requireAdmin: true }
-        }
+        },
+        {
+          path: 'posts',
+          name: 'Posts',
+          component: () => import('../views/Posts.vue')
+        },
       ]
     },
     {
