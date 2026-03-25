@@ -4,7 +4,12 @@
     shadow="never"
     v-if="searchColumns.length > 0"
   >
-    <el-form :model="searchParam" inline class="pro-search-form">
+    <el-form
+      :model="searchParam"
+      inline
+      class="pro-search-form"
+      @submit.prevent
+    >
       <el-form-item
         v-for="col in searchColumns"
         :key="col.prop"
@@ -15,7 +20,7 @@
           v-model="searchParam[col.prop]"
           :placeholder="`请输入${col.label}`"
           clearable
-          @keyup.enter="handleSearch"
+          @keyup.enter.prevent="handleSearch"
         />
 
         <el-select
@@ -35,10 +40,10 @@
       </el-form-item>
 
       <el-form-item class="action-group">
-        <el-button type="primary" @click="handleSearch">
+        <el-button type="primary" native-type="button" @click="handleSearch">
           <el-icon><Search /></el-icon> 搜索
         </el-button>
-        <el-button @click="handleReset">
+        <el-button native-type="button" @click="handleReset">
           <el-icon><Refresh /></el-icon> 重置
         </el-button>
         <slot name="action"></slot>
