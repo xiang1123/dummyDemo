@@ -114,6 +114,7 @@ import {
 import type { User } from '../types/user'
 import { logError } from '../utils/error'
 import { useTablePage } from '../composables/useTablePage'
+import { useConfirmDelete } from '../composables/useConfirmDelete'
 
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 },
@@ -152,6 +153,7 @@ const { loading, tableData, currentPage, pageSize, total, fetchTableData, handle
       }
     },
   })
+const { confirmAndDelete } = useConfirmDelete()
 
 // 弹窗与表单状态
 const dialogVisible = ref(false)
@@ -202,25 +204,15 @@ const handleEdit = (row: User) => {
 }
 
 const handleDelete = (row: User) => {
-  ElMessageBox.confirm(
-    `确定要移除员工 "${row.firstName} ${row.lastName}" 吗？`,
-    '高危操作',
-    {
-      confirmButtonText: '确定开除',
-      cancelButtonText: '取消',
-      type: 'warning',
-    },
-  )
-    .then(async () => {
-      try {
-        await deleteUserAPI(row.id)
-        ElMessage.success('员工已成功移除！')
-        fetchTableData()
-      } catch (error) {
-        logError('删除失败', error)
-      }
-    })
-    .catch(() => {})
+  confirmAndDelete({
+    message: `确定要移除员工 "${row.firstName} ${row.lastName}" 吗？`,
+    title: '高危操作',
+    confirmButtonText: '确定开除',
+    request: () => deleteUserAPI(row.id),
+    successMessage: '员工已成功移除！',
+    onSuccess: fetchTableData,
+    errorContext: '删除失败',
+  })
 }
 
 // 提交表单

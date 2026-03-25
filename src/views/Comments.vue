@@ -36,6 +36,7 @@ import { Delete } from '@element-plus/icons-vue'
 import type { Comment } from '../types/comment'
 import { logError } from '../utils/error'
 import { useTablePage } from '../composables/useTablePage'
+import { useConfirmDelete } from '../composables/useConfirmDelete'
 
 const searchParam = ref({
   body: '',
@@ -64,6 +65,7 @@ const { loading, tableData, currentPage, pageSize, total, fetchTableData, handle
       }
     },
   })
+const { confirmAndDelete } = useConfirmDelete()
 
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 },
@@ -89,18 +91,14 @@ const handleReset = async () => {
   handleSearch()
 }
 
-const handleDelete = async (row: Comment) => {
-  ElMessageBox.confirm(`确定删除评论 #${row.id} 吗？`, '警告', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning',
+const handleDelete = (row: Comment) => {
+  confirmAndDelete({
+    message: `确定删除评论 #${row.id} 吗？`,
+    title: '警告',
+    request: () => deleteCommentAPI(row.id),
+    onSuccess: fetchTableData,
+    errorContext: '删除失败',
   })
-    .then(async () => {
-      await deleteCommentAPI(row.id)
-      ElMessage.success('删除成功')
-      fetchTableData()
-    })
-    .catch(() => {})
 }
 
 onMounted(() => {

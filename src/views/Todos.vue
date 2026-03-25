@@ -83,6 +83,7 @@ import {
 } from '../api/modules/todo'
 import { logError } from '../utils/error'
 import { useTablePage } from '../composables/useTablePage'
+import { useConfirmDelete } from '../composables/useConfirmDelete'
 
 const searchParam = ref({
   todo: '',
@@ -113,6 +114,7 @@ const { loading, tableData, currentPage, pageSize, total, fetchTableData, handle
       }
     },
   })
+const { confirmAndDelete } = useConfirmDelete()
 
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
@@ -217,18 +219,14 @@ const handleToggle = async (row: Todo, value: string | number | boolean) => {
   }
 }
 
-const handleDelete = async (row: Todo) => {
-  ElMessageBox.confirm(`确定删除待办 #${row.id} 吗？`, '警告', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning',
+const handleDelete = (row: Todo) => {
+  confirmAndDelete({
+    message: `确定删除待办 #${row.id} 吗？`,
+    title: '警告',
+    request: () => deleteTodoAPI(row.id),
+    onSuccess: fetchTableData,
+    errorContext: '删除失败',
   })
-    .then(async () => {
-      await deleteTodoAPI(row.id)
-      ElMessage.success('删除成功')
-      fetchTableData()
-    })
-    .catch(() => {})
 }
 
 onMounted(() => {

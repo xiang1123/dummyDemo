@@ -131,6 +131,7 @@ import {
 import type { Product } from '../types/product'
 import { logError } from '../utils/error'
 import { useTablePage } from '../composables/useTablePage'
+import { useConfirmDelete } from '../composables/useConfirmDelete'
 
 // 定义表格的列配置 (区分纯文本和自定义UI)
 const tableColumns = [
@@ -166,6 +167,7 @@ const { loading, tableData, currentPage, pageSize, total, fetchTableData, handle
       }
     },
   })
+const { confirmAndDelete } = useConfirmDelete()
 
 // === 弹窗与表单状态定义 ===
 const dialogVisible = ref(false)
@@ -210,23 +212,14 @@ const handleEdit = (row: Product) => {
 
 // 3. 删除商品
 const handleDelete = (row: Product) => {
-  ElMessageBox.confirm(`确定要删除商品 "${row.title}" 吗？`, '高危操作', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning',
+  confirmAndDelete({
+    message: `确定要删除商品 "${row.title}" 吗？`,
+    title: '高危操作',
+    request: () => deleteProductAPI(row.id),
+    successMessage: '商品删除成功！',
+    onSuccess: fetchTableData,
+    errorContext: '删除失败',
   })
-    .then(async () => {
-      try {
-        await deleteProductAPI(row.id)
-        ElMessage.success('商品删除成功！')
-        fetchTableData() // 删除后刷新列表
-      } catch (error) {
-        logError('删除失败', error)
-      }
-    })
-    .catch(() => {
-      /* 取消删除 */
-    })
 }
 
 // 4. 提交表单 (新增 或 修改)

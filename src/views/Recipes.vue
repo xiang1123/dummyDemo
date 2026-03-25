@@ -260,6 +260,7 @@ import {
 } from '../api/modules/recipe'
 import { logError } from '../utils/error'
 import { useTablePage } from '../composables/useTablePage'
+import { useConfirmDelete } from '../composables/useConfirmDelete'
 
 const drawerVisible = ref(false)
 const currentRecipe = ref<Recipe | null>(null)
@@ -304,6 +305,7 @@ const { loading, tableData, currentPage, pageSize, total, fetchTableData, handle
       }
     },
   })
+const { confirmAndDelete } = useConfirmDelete()
 
 // 🌟 核心：表单数据模型
 const formData = ref({
@@ -438,18 +440,14 @@ const submitForm = async () => {
   }
 }
 
-const handleDelete = async (recipe: Recipe) => {
-  ElMessageBox.confirm(`确定要删除该${recipe.name}食谱吗？`, '警告', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning',
+const handleDelete = (recipe: Recipe) => {
+  confirmAndDelete({
+    message: `确定要删除该${recipe.name}食谱吗？`,
+    title: '警告',
+    request: () => deleteRecipeAPI(recipe.id),
+    onSuccess: fetchTableData,
+    errorContext: '删除失败',
   })
-    .then(async () => {
-      await deleteRecipeAPI(recipe.id)
-      ElMessage.success('删除成功')
-      fetchTableData()
-    })
-    .catch(() => {})
 }
 
 const handleViewDetail = (recipe: Recipe) => {

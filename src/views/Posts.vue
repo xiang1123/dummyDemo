@@ -117,6 +117,7 @@ import { getPostsAPI, searchPostsAPI, deletePostAPI } from '../api/modules/post'
 import type { Post } from '../types/post'
 import { logError } from '../utils/error'
 import { useTablePage } from '../composables/useTablePage'
+import { useConfirmDelete } from '../composables/useConfirmDelete'
 
 const searchParam = ref({
   title: '',
@@ -140,6 +141,7 @@ const { loading, tableData, currentPage, pageSize, total, fetchTableData, handle
       }
     },
   })
+const { confirmAndDelete } = useConfirmDelete()
 const drawerVisible = ref(false)
 const currentPost = ref<Post | null>(null)
 
@@ -157,18 +159,15 @@ const tableColumns = [
   { label: '操作', width: 150, fixed: 'right', slot: 'action' },
 ]
 
-const handleDelete = async (row: Post) => {
-  ElMessageBox.confirm(`确定要删除文章 "${row.title}" 吗？`, '警告', {
+const handleDelete = (row: Post) => {
+  confirmAndDelete({
+    message: `确定要删除文章 "${row.title}" 吗？`,
+    title: '警告',
     confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
+    request: () => deletePostAPI(row.id),
+    onSuccess: fetchTableData,
+    errorContext: '删除失败',
   })
-    .then(async () => {
-      await deletePostAPI(row.id)
-      ElMessage.success('删除成功')
-      fetchTableData()
-    })
-    .catch(() => {})
 }
 
 onMounted(() => {
