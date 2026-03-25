@@ -14,7 +14,7 @@
       >
         <el-menu-item index="/dashboard">
           <el-icon><DataLine /></el-icon>
-          <span>数据大盘</span>
+          <span>数据大屏</span>
         </el-menu-item>
         <el-menu-item v-if="userStore.isAdmin" index="/products">
           <el-icon><Goods /></el-icon>
@@ -59,11 +59,7 @@
               <span class="username">
                 {{ userStore.userInfo.firstName }}
                 {{ userStore.userInfo.lastName }}
-                <el-tag
-                  :type="userStore.isAdmin ? 'danger' : 'info'"
-                  size="small"
-                  class="role-tag"
-                >
+                <el-tag :type="userStore.isAdmin ? 'danger' : 'info'" size="small" class="role-tag">
                   {{ userStore.isAdmin ? 'Admin' : 'Editor' }}
                 </el-tag>
               </span>
@@ -73,11 +69,7 @@
               <el-dropdown-menu>
                 <!-- <el-dropdown-item>个人中心</el-dropdown-item>
                 <el-dropdown-item>修改密码</el-dropdown-item> -->
-                <el-dropdown-item
-                  divided
-                  @click="handleLogout"
-                  style="color: #f56c6c"
-                >
+                <el-dropdown-item divided @click="handleLogout" style="color: #f56c6c">
                   退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>

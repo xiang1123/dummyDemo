@@ -7,20 +7,23 @@ import http from "../http"
  */
 export const getStatsAPI = async () => {
   // 使用Promise.all并行请求三个API，获取各自总数
-  const [products, users, posts] = await Promise.all([
+  const [products, users, posts, todos] = await Promise.all([
     // 获取产品总数，限制返回1条记录以只获取总数信息
     http.get<any, { total: number }>('/products?limit=1'),
     // 获取用户总数，限制返回1条记录以只获取总数信息
     http.get<any, { total: number }>('/users?limit=1'),
     // 获取帖子总数，限制返回1条记录以只获取总数信息
-    http.get<any, { total: number }>('/posts?limit=1')
+    http.get<any, { total: number }>('/posts?limit=1'),
+    // 获取待办总数
+    http.get<any, { total: number }>('/todos?limit=1'),
   ])
 
   // 返回包含各类总数的结果对象
   return {
     productCount: products.total,
     userCount: users.total,
-    postCount: posts.total
+    postCount: posts.total,
+    todoCount: todos.total,
   }
 }
 
@@ -31,4 +34,12 @@ export const getStatsAPI = async () => {
  */
 export const getChartDataAPI = () => {
   return http.get<any, { products: any[] }>('/products?limit=8')
+}
+
+export const getPostTrendAPI = () => {
+  return http.get<any, { posts: any[] }>('/posts?limit=8')
+}
+
+export const getTodoOverviewAPI = () => {
+  return http.get<any, { todos: any[] }>('/todos?limit=30')
 }

@@ -1,37 +1,66 @@
 <template>
   <div class="dashboard-container">
-    <el-row :gutter="20">
-      <el-col :span="8">
+    <el-row :gutter="16">
+      <el-col :xs="12" :sm="12" :md="6" :lg="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-title">总计商品 (Products)</div>
-          <div class="stat-value">{{ stats.productCount }}</div>
+          <div class="stat-title">商品总量</div>
+          <div class="stat-value text-primary">{{ stats.productCount }}</div>
         </el-card>
       </el-col>
-
-      <el-col :span="8">
+      <el-col :xs="12" :sm="12" :md="6" :lg="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-title">注册用户 (Users)</div>
+          <div class="stat-title">用户总量</div>
           <div class="stat-value text-success">{{ stats.userCount }}</div>
         </el-card>
       </el-col>
-
-      <el-col :span="8">
+      <el-col :xs="12" :sm="12" :md="6" :lg="6">
         <el-card shadow="hover" class="stat-card">
-          <div class="stat-title">全网发帖 (Posts)</div>
+          <div class="stat-title">帖子总量</div>
           <div class="stat-value text-warning">{{ stats.postCount }}</div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="12" :md="6" :lg="6">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-title">待办总量</div>
+          <div class="stat-value text-danger">{{ stats.todoCount }}</div>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" class="mt-20">
-      <el-col :span="24">
-        <el-card shadow="hover">
+    <el-row :gutter="16" class="mt-16">
+      <el-col :xs="24" :sm="24" :md="14" :lg="14">
+        <el-card shadow="hover" class="chart-card">
           <template #header>
-            <div class="card-header">
-              <span>热门商品库存状态分析</span>
-            </div>
+            <span>热门商品库存排行</span>
           </template>
-          <div ref="chartRef" style="height: 400px; width: 100%"></div>
+          <div ref="stockChartRef" class="chart-box"></div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="24" :md="10" :lg="10">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <span>商品分类占比</span>
+          </template>
+          <div ref="categoryChartRef" class="chart-box"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="16" class="mt-16">
+      <el-col :xs="24" :sm="24" :md="14" :lg="14">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <span>帖子浏览趋势（Top 8）</span>
+          </template>
+          <div ref="postTrendChartRef" class="chart-box"></div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="24" :md="10" :lg="10">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <span>待办完成率</span>
+          </template>
+          <div ref="todoChartRef" class="chart-box"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -40,36 +69,61 @@
 
 <script setup lang="ts">
 import * as echarts from 'echarts'
-import { getStatsAPI, getChartDataAPI } from '../api/modules/dashboard'
+import {
+  getStatsAPI,
+  getChartDataAPI,
+  getPostTrendAPI,
+  getTodoOverviewAPI,
+} from '../api/modules/dashboard'
 import { logError } from '../utils/error'
 
 const stats = reactive({
   productCount: 0,
   userCount: 0,
   postCount: 0,
+  todoCount: 0,
 })
 
-const chartRef = ref<HTMLElement | null>(null)
-let myChart: echarts.ECharts | null = null
+const stockChartRef = ref<HTMLElement | null>(null)
+const categoryChartRef = ref<HTMLElement | null>(null)
+const postTrendChartRef = ref<HTMLElement | null>(null)
+const todoChartRef = ref<HTMLElement | null>(null)
+
+const chartInstances: echarts.ECharts[] = []
 
 const initData = async () => {
   try {
-    const res = await getStatsAPI()
-    stats.productCount = res.productCount
-    stats.userCount = res.userCount
-    stats.postCount = res.postCount
+    const [statsRes, productRes, postRes, todoRes] = await Promise.all([
+      getStatsAPI(),
+      getChartDataAPI(),
+      getPostTrendAPI(),
+      getTodoOverviewAPI(),
+    ])
 
-    const chartRes = await getChartDataAPI()
-    renderChart(chartRes.products)
+    stats.productCount = statsRes.productCount
+    stats.userCount = statsRes.userCount
+    stats.postCount = statsRes.postCount
+    stats.todoCount = statsRes.todoCount
+
+    renderStockChart(productRes.products)
+    renderCategoryChart(productRes.products)
+    renderPostTrendChart(postRes.posts)
+    renderTodoChart(todoRes.todos)
   } catch (error) {
     logError('获取大盘数据失败', error)
   }
 }
 
-const renderChart = async (products: any[]) => {
-  if (!chartRef.value) return
+const createChart = (el: HTMLElement | null) => {
+  if (!el) return null
+  const chart = echarts.init(el)
+  chartInstances.push(chart)
+  return chart
+}
 
-  myChart = echarts.init(chartRef.value)
+const renderStockChart = (products: any[]) => {
+  const chart = createChart(stockChartRef.value)
+  if (!chart) return
 
   const xData = products.map((p) => p.title.substring(0, 10) + '...') // 名字太长截断
   const yData = products.map((p) => p.stock)
@@ -109,11 +163,87 @@ const renderChart = async (products: any[]) => {
       },
     ],
   }
-  myChart.setOption(option)
+  chart.setOption(option)
+}
+
+const renderCategoryChart = (products: any[]) => {
+  const chart = createChart(categoryChartRef.value)
+  if (!chart) return
+
+  const map = new Map<string, number>()
+  products.forEach((item) => {
+    map.set(item.category, (map.get(item.category) || 0) + 1)
+  })
+
+  const data = Array.from(map.entries()).map(([name, value]) => ({ name, value }))
+
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0 },
+    series: [
+      {
+        name: '分类占比',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+        data,
+      },
+    ],
+  })
+}
+
+const renderPostTrendChart = (posts: any[]) => {
+  const chart = createChart(postTrendChartRef.value)
+  if (!chart) return
+
+  const xData = posts.map((p) => p.title.substring(0, 8) + '...')
+  const views = posts.map((p) => p.views)
+
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: xData,
+      axisLabel: { rotate: 20 },
+    },
+    yAxis: { type: 'value', name: '浏览量' },
+    series: [
+      {
+        type: 'line',
+        smooth: true,
+        data: views,
+        areaStyle: {},
+      },
+    ],
+  })
+}
+
+const renderTodoChart = (todos: any[]) => {
+  const chart = createChart(todoChartRef.value)
+  if (!chart) return
+
+  const completedCount = todos.filter((item) => item.completed).length
+  const pendingCount = todos.length - completedCount
+
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    series: [
+      {
+        type: 'pie',
+        radius: ['45%', '72%'],
+        label: { formatter: '{b}\n{d}%' },
+        data: [
+          { name: '已完成', value: completedCount },
+          { name: '未完成', value: pendingCount },
+        ],
+      },
+    ],
+  })
 }
 
 const handleResize = () => {
-  myChart?.resize()
+  chartInstances.forEach((item) => item.resize())
 }
 
 onMounted(() => {
@@ -123,40 +253,52 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  myChart?.dispose()
+  chartInstances.forEach((item) => item.dispose())
 })
 </script>
 
 <style scoped>
-.dashboard-container {
-  /* 基础的内边距已经在 layout 里写了，这里按需调整 */
-}
-
 .stat-card {
-  text-align: center;
-  padding: 10px 0;
+  border-radius: 10px;
+  text-align: left;
+  padding: 6px 4px;
 }
 
 .stat-title {
-  color: #909399;
-  font-size: 14px;
-  margin-bottom: 12px;
+  color: #8a8f98;
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
 .stat-value {
-  font-size: 32px;
-  font-weight: bold;
-  color: #303133;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
 }
 
+.text-primary {
+  color: #409eff;
+}
 .text-success {
   color: #67c23a;
 }
 .text-warning {
   color: #e6a23c;
 }
+.text-danger {
+  color: #f56c6c;
+}
 
-.mt-20 {
-  margin-top: 20px;
+.chart-card {
+  border-radius: 10px;
+}
+
+.chart-box {
+  width: 100%;
+  height: 340px;
+}
+
+.mt-16 {
+  margin-top: 16px;
 }
 </style>
