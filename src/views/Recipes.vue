@@ -65,7 +65,7 @@
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :total="total"
-        @change=""
+        @change="fetchRecipes"
       />
     </el-card>
 
