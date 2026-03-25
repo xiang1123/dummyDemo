@@ -130,6 +130,7 @@ import {
 } from '../api/modules/product'
 import type { Product } from '../types/product'
 import { logError } from '../utils/error'
+import { useTablePage } from '../composables/useTablePage'
 
 // 定义表格的列配置 (区分纯文本和自定义UI)
 const tableColumns = [
@@ -143,15 +144,28 @@ const tableColumns = [
   { label: '操作', width: 180, fixed: 'right', slot: 'action' }, // 需要按钮，用 slot
 ]
 
-// === 列表状态定义 ===
-const loading = ref(false)
-const tableData = ref<Product[]>([])
 const searchParam = ref({
   title: '',
 })
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+const { loading, tableData, currentPage, pageSize, total, fetchTableData, handleSearch } =
+  useTablePage<Product>({
+    loadData: async ({ currentPage, pageSize }) => {
+      const skip = (currentPage - 1) * pageSize
+      const keyword = searchParam.value.title?.trim()
+      let res
+      try {
+        if (keyword) {
+          res = await searchProductsAPI(keyword, pageSize, skip)
+        } else {
+          res = await getProductsAPI(pageSize, skip)
+        }
+        return { list: res.products, total: res.total }
+      } catch (error) {
+        logError('获取商品列表失败', error)
+        return { list: [], total: 0 }
+      }
+    },
+  })
 
 // === 弹窗与表单状态定义 ===
 const dialogVisible = ref(false)
@@ -174,33 +188,6 @@ const formRules = {
   category: [{ required: true, message: '请选择分类', trigger: 'change' }],
   price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
   stock: [{ required: true, message: '请输入库存', trigger: 'blur' }],
-}
-
-// === 核心方法：获取表格数据 ===
-const fetchTableData = async () => {
-  loading.value = true
-  try {
-    const skip = (currentPage.value - 1) * pageSize.value
-    let res
-    const keyword = searchParam.value.title?.trim()
-    if (keyword) {
-      res = await searchProductsAPI(keyword, pageSize.value, skip)
-    } else {
-      res = await getProductsAPI(pageSize.value, skip)
-    }
-    tableData.value = res.products
-    total.value = res.total
-  } catch (error) {
-    logError('获取商品列表失败', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-// === 分页与搜索事件 ===
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchTableData()
 }
 
 // === 增删改核心逻辑 ===

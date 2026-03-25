@@ -113,6 +113,7 @@ import {
 } from '../api/modules/user'
 import type { User } from '../types/user'
 import { logError } from '../utils/error'
+import { useTablePage } from '../composables/useTablePage'
 
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 },
@@ -129,15 +130,28 @@ const tableColumns = [
   { label: '操作', width: 180, fixed: 'right', slot: 'action' },
 ]
 
-// 列表与分页状态
-const loading = ref(false)
-const tableData = ref<User[]>([])
 const searchParam = ref({
   firstName: '',
 })
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+const { loading, tableData, currentPage, pageSize, total, fetchTableData, handleSearch } =
+  useTablePage<User>({
+    loadData: async ({ currentPage, pageSize }) => {
+      const skip = (currentPage - 1) * pageSize
+      const keyword = searchParam.value.firstName?.trim()
+      let res
+      try {
+        if (keyword) {
+          res = await searchUsersAPI(keyword, pageSize, skip)
+        } else {
+          res = await getUsersAPI(pageSize, skip)
+        }
+        return { list: res.users, total: res.total }
+      } catch (error) {
+        logError('获取用户列表失败', error)
+        return { list: [], total: 0 }
+      }
+    },
+  })
 
 // 弹窗与表单状态
 const dialogVisible = ref(false)
@@ -166,33 +180,6 @@ const formRules = {
       trigger: ['blur', 'change'],
     },
   ],
-}
-
-// 获取表格数据
-const fetchTableData = async () => {
-  loading.value = true
-  try {
-    const skip = (currentPage.value - 1) * pageSize.value
-    let res
-    const keyword = searchParam.value.firstName?.trim()
-    if (keyword) {
-      res = await searchUsersAPI(keyword, pageSize.value, skip)
-    } else {
-      res = await getUsersAPI(pageSize.value, skip)
-    }
-    tableData.value = res.users
-    total.value = res.total
-  } catch (error) {
-    logError('获取用户列表失败', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-// 分页与搜索事件
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchTableData()
 }
 
 // 新增/编辑/删除逻辑
