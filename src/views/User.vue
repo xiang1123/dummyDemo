@@ -1,26 +1,17 @@
 <template>
   <div class="user-container">
-    <el-card class="action-card" shadow="never">
-      <div class="action-bar">
-        <div class="search-box">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="请输入名字搜索用户..."
-            clearable
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-            style="width: 300px"
-          >
-            <template #append>
-              <el-button @click="handleSearch">搜索</el-button>
-            </template>
-          </el-input>
-        </div>
+    <ProSearch
+      :columns="tableColumns"
+      v-model:search-param="searchParam"
+      @search="handleSearch"
+      @reset="handleSearch"
+    >
+      <template #action>
         <el-button type="primary" @click="openAddDialog">
           + 新增员工
         </el-button>
-      </div>
-    </el-card>
+      </template>
+    </ProSearch>
 
     <el-card class="table-card" shadow="never">
       <ProTable :data="tableData" :loading="loading" :columns="tableColumns">
@@ -128,7 +119,7 @@ const tableColumns = [
   // 特殊列：使用 avatar 插槽
   { label: '头像', width: 80, slot: 'avatar' },
   // 特殊列：使用 name 插槽
-  { label: '姓名', minWidth: 150, slot: 'name' },
+  { prop: 'firstName', label: '姓名', minWidth: 150, slot: 'name', search: { type: 'input' } },
   { prop: 'username', label: '登录账号', width: 120 },
   { prop: 'email', label: '邮箱', minWidth: 200 },
   { prop: 'phone', label: '联系电话', width: 150 },
@@ -141,7 +132,9 @@ const tableColumns = [
 // 列表与分页状态
 const loading = ref(false)
 const tableData = ref<User[]>([])
-const searchKeyword = ref('')
+const searchParam = ref({
+  firstName: '',
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -181,8 +174,9 @@ const fetchTableData = async () => {
   try {
     const skip = (currentPage.value - 1) * pageSize.value
     let res
-    if (searchKeyword.value.trim()) {
-      res = await searchUsersAPI(searchKeyword.value, pageSize.value, skip)
+    const keyword = searchParam.value.firstName?.trim()
+    if (keyword) {
+      res = await searchUsersAPI(keyword, pageSize.value, skip)
     } else {
       res = await getUsersAPI(pageSize.value, skip)
     }

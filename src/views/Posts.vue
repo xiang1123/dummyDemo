@@ -1,22 +1,15 @@
 <template>
   <div class="post-container">
-    <el-card class="action-card" shadow="never">
-      <div class="action-bar">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="请输入帖子标题搜索..."
-          clearable
-          @clear="handleSearch"
-          @keyup.enter="handleSearch"
-          style="width: 300px"
-        >
-          <template #append>
-            <el-button>搜索</el-button>
-          </template>
-        </el-input>
+    <ProSearch
+      :columns="tableColumns"
+      v-model:search-param="searchParam"
+      @search="handleSearch"
+      @reset="handleSearch"
+    >
+      <template #action>
         <el-button type="primary">+ 发布新帖</el-button>
-      </div>
-    </el-card>
+      </template>
+    </ProSearch>
 
     <el-card class="table-card" shadow="never">
       <ProTable :data="tableData" :loading="loading" :columns="tableColumns">
@@ -126,7 +119,9 @@ import { logError } from '../utils/error'
 
 const loading = ref(false)
 const tableData = ref<Post[]>([])
-const searchKeyword = ref('')
+const searchParam = ref({
+  title: '',
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -140,7 +135,7 @@ const handleViewDetail = (row: Post) => {
 
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 },
-  { prop: 'title', label: '标题', minWidth: 200, tooltip: true },
+  { prop: 'title', label: '标题', minWidth: 200, tooltip: true, search: { type: 'input' } },
   { label: '标签 (Tags)', minWidth: 150, slot: 'tags' },
   { label: '互动 (Reactions)', width: 150, slot: 'reactions' },
   { prop: 'views', label: '浏览量', width: 100 },
@@ -152,8 +147,9 @@ const fetchTableData = async () => {
   try {
     const skip = (currentPage.value - 1) * pageSize.value
     let res
-    if (searchKeyword.value.trim()) {
-      res = await searchPostsAPI(searchKeyword.value, pageSize.value, skip)
+    const keyword = searchParam.value.title?.trim()
+    if (keyword) {
+      res = await searchPostsAPI(keyword, pageSize.value, skip)
     } else {
       res = await getPostsAPI(pageSize.value, skip)
     }

@@ -1,26 +1,17 @@
 <template>
   <div class="product-container">
-    <el-card class="action-card" shadow="never">
-      <div class="action-bar">
-        <div class="search-box">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="请输入商品名称搜索..."
-            clearable
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-            style="width: 300px"
-          >
-            <template #append>
-              <el-button @click="handleSearch">搜索</el-button>
-            </template>
-          </el-input>
-        </div>
+    <ProSearch
+      :columns="tableColumns"
+      v-model:search-param="searchParam"
+      @search="handleSearch"
+      @reset="handleSearch"
+    >
+      <template #action>
         <el-button type="primary" @click="openAddDialog">
           + 新增商品
         </el-button>
-      </div>
-    </el-card>
+      </template>
+    </ProSearch>
 
     <el-card class="table-card" shadow="never">
       <ProTable :data="tableData" :loading="loading" :columns="tableColumns">
@@ -144,7 +135,7 @@ import { logError } from '../utils/error'
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 }, // 纯文本，用 prop
   { label: '商品图片', width: 100, slot: 'image' }, // 需要用 el-image，用 slot
-  { prop: 'title', label: '商品名称', minWidth: 180 }, // 纯文本，用 prop
+  { prop: 'title', label: '商品名称', minWidth: 180, search: { type: 'input' } }, // 纯文本，用 prop
   { prop: 'category', label: '分类', width: 120 }, // 纯文本，用 prop
   { prop: 'brand', label: '品牌', width: 120 }, // 纯文本，用 prop
   { label: '价格 ($)', width: 120, slot: 'price' }, // 需要红色加粗，用 slot
@@ -155,7 +146,9 @@ const tableColumns = [
 // === 列表状态定义 ===
 const loading = ref(false)
 const tableData = ref<Product[]>([])
-const searchKeyword = ref('')
+const searchParam = ref({
+  title: '',
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -189,8 +182,9 @@ const fetchTableData = async () => {
   try {
     const skip = (currentPage.value - 1) * pageSize.value
     let res
-    if (searchKeyword.value.trim()) {
-      res = await searchProductsAPI(searchKeyword.value, pageSize.value, skip)
+    const keyword = searchParam.value.title?.trim()
+    if (keyword) {
+      res = await searchProductsAPI(keyword, pageSize.value, skip)
     } else {
       res = await getProductsAPI(pageSize.value, skip)
     }
