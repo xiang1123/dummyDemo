@@ -35,16 +35,35 @@ import {
 import { Delete } from '@element-plus/icons-vue'
 import type { Comment } from '../types/comment'
 import { logError } from '../utils/error'
-
-const tableData = ref<Comment[]>([])
-const loading = ref(false)
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+import { useTablePage } from '../composables/useTablePage'
 
 const searchParam = ref({
   body: '',
 })
+const { loading, tableData, currentPage, pageSize, total, fetchTableData, handleSearch } =
+  useTablePage<Comment>({
+    loadData: async ({ currentPage, pageSize }) => {
+      const skip = (currentPage - 1) * pageSize
+      const keyword = searchParam.value.body?.trim()
+      let res
+
+      try {
+        if (keyword) {
+          res = await searchCommentsAPI(keyword, pageSize, skip)
+        } else {
+          res = await getCommentsAPI(pageSize, skip)
+        }
+
+        return {
+          list: res.comments,
+          total: res.total,
+        }
+      } catch (error) {
+        logError('获取评论失败', error)
+        return { list: [], total: 0 }
+      }
+    },
+  })
 
 const tableColumns = [
   { prop: 'id', label: 'ID', width: 80 },
@@ -66,38 +85,8 @@ const tableColumns = [
   { label: '操作', width: 150, fixed: 'right', slot: 'action' },
 ]
 
-const fetchTableData = async () => {
-  loading.value = true
-  try {
-    const skip = (currentPage.value - 1) * pageSize.value
-    let res
-
-    // 🌟 第 2 处修改：把 searchParam.value.name 改成 searchParam.value.body
-    const keyword = searchParam.value.body?.trim()
-
-    if (keyword) {
-      res = await searchCommentsAPI(keyword, pageSize.value, skip)
-    } else {
-      res = await getCommentsAPI(pageSize.value, skip)
-    }
-
-    tableData.value = res.comments
-    total.value = res.total
-  } catch (error) {
-    logError('获取评论失败', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchTableData()
-}
-
 const handleReset = async () => {
-  currentPage.value = 1
-  fetchTableData()
+  handleSearch()
 }
 
 const handleDelete = async (row: Comment) => {

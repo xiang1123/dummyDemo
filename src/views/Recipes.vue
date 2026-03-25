@@ -259,12 +259,8 @@ import {
   deleteRecipeAPI,
 } from '../api/modules/recipe'
 import { logError } from '../utils/error'
+import { useTablePage } from '../composables/useTablePage'
 
-const loading = ref(false)
-const tableData = ref<Recipe[]>([])
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
 const drawerVisible = ref(false)
 const currentRecipe = ref<Recipe | null>(null)
 const formDrawerVisible = ref(false)
@@ -276,6 +272,38 @@ const searchParam = ref({
   name: '',
   difficulty: '',
 })
+const { loading, tableData, currentPage, pageSize, total, fetchTableData, handleSearch } =
+  useTablePage<Recipe>({
+    loadData: async ({ currentPage, pageSize }) => {
+      const skip = (currentPage - 1) * pageSize
+      const keyword = searchParam.value.name?.trim()
+      let res
+
+      try {
+        if (keyword) {
+          res = await searchRecipesAPI(keyword, pageSize, skip)
+        } else {
+          res = await getRecipesAPI(pageSize, skip)
+        }
+
+        let finalData = res.recipes
+        const selectedDifficulty = searchParam.value.difficulty
+        if (selectedDifficulty) {
+          finalData = finalData.filter(
+            (item) => item.difficulty === selectedDifficulty,
+          )
+        }
+
+        return {
+          list: finalData,
+          total: res.total,
+        }
+      } catch (error) {
+        logError('获取食谱失败', error)
+        return { list: [], total: 0 }
+      }
+    },
+  })
 
 // 🌟 核心：表单数据模型
 const formData = ref({
@@ -320,53 +348,8 @@ const tableColumns = [
   { label: '操作', width: 220, fixed: 'right', slot: 'action' },
 ]
 
-const fetchTableData = async () => {
-  loading.value = true
-  try {
-    const skip = (currentPage.value - 1) * pageSize.value
-    let res
-
-    const keyword = searchParam.value.name?.trim()
-
-    if (keyword) {
-      res = await searchRecipesAPI(keyword, pageSize.value, skip)
-    } else {
-      res = await getRecipesAPI(pageSize.value, skip)
-    }
-
-    // 🌟 拿到后端返回的原始数组
-    let finalData = res.recipes
-
-    // 🌟 核心魔法：前端弥补后端的不足！
-    // 检查用户是不是在下拉框里选了“难度”
-    const selectedDifficulty = searchParam.value.difficulty
-    if (selectedDifficulty) {
-      // 用 JS 把不符合难度的数据强行筛掉！
-      finalData = finalData.filter(
-        (item) => item.difficulty === selectedDifficulty,
-      )
-    }
-
-    // 🌟 最后把过滤完的数据喂给表格
-    tableData.value = finalData
-    total.value = res.total // (注：由于前端过滤了数组，这里的总条数可能会有些许误差，企业实战中最好还是逼后端改接口)
-  } catch (error) {
-    logError('获取食谱失败', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  // 在真实项目中，你会把 searchParam.value 传给后端的 API
-  console.log('当前搜索条件：', searchParam.value)
-  fetchTableData()
-}
-
 const handleReset = () => {
-  currentPage.value = 1
-  fetchTableData()
+  handleSearch()
 }
 
 const addIngredient = () => formData.value.ingredients.push('')

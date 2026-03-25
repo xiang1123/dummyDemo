@@ -82,17 +82,37 @@ import {
   deleteTodoAPI,
 } from '../api/modules/todo'
 import { logError } from '../utils/error'
-
-const loading = ref(false)
-const tableData = ref<Todo[]>([])
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+import { useTablePage } from '../composables/useTablePage'
 
 const searchParam = ref({
   todo: '',
   completed: '',
 })
+const { loading, tableData, currentPage, pageSize, total, fetchTableData, handleSearch } =
+  useTablePage<Todo>({
+    loadData: async ({ currentPage, pageSize }) => {
+      const skip = (currentPage - 1) * pageSize
+      const keyword = searchParam.value.todo?.trim() || ''
+      const completed = (searchParam.value.completed || '') as '' | 'true' | 'false'
+      let res
+
+      try {
+        if (keyword || completed) {
+          res = await searchTodosAPI(keyword, completed, pageSize, skip)
+        } else {
+          res = await getTodosAPI(pageSize, skip)
+        }
+
+        return {
+          list: res.todos,
+          total: res.total,
+        }
+      } catch (error) {
+        logError('获取待办失败', error)
+        return { list: [], total: 0 }
+      }
+    },
+  })
 
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
@@ -129,37 +149,8 @@ const tableColumns = [
   { label: '操作', width: 150, fixed: 'right', slot: 'action' },
 ]
 
-const fetchTableData = async () => {
-  loading.value = true
-  try {
-    const skip = (currentPage.value - 1) * pageSize.value
-    const keyword = searchParam.value.todo?.trim() || ''
-    const completed = (searchParam.value.completed || '') as '' | 'true' | 'false'
-
-    let res
-    if (keyword || completed) {
-      res = await searchTodosAPI(keyword, completed, pageSize.value, skip)
-    } else {
-      res = await getTodosAPI(pageSize.value, skip)
-    }
-
-    tableData.value = res.todos
-    total.value = res.total
-  } catch (error) {
-    logError('获取待办失败', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchTableData()
-}
-
 const handleReset = () => {
-  currentPage.value = 1
-  fetchTableData()
+  handleSearch()
 }
 
 const resetForm = () => {

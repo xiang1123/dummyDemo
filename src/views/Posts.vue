@@ -116,15 +116,30 @@
 import { getPostsAPI, searchPostsAPI, deletePostAPI } from '../api/modules/post'
 import type { Post } from '../types/post'
 import { logError } from '../utils/error'
+import { useTablePage } from '../composables/useTablePage'
 
-const loading = ref(false)
-const tableData = ref<Post[]>([])
 const searchParam = ref({
   title: '',
 })
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+const { loading, tableData, currentPage, pageSize, total, fetchTableData, handleSearch } =
+  useTablePage<Post>({
+    loadData: async ({ currentPage, pageSize }) => {
+      const skip = (currentPage - 1) * pageSize
+      const keyword = searchParam.value.title?.trim()
+      let res
+      try {
+        if (keyword) {
+          res = await searchPostsAPI(keyword, pageSize, skip)
+        } else {
+          res = await getPostsAPI(pageSize, skip)
+        }
+        return { list: res.posts, total: res.total }
+      } catch (error) {
+        logError('获取帖子失败', error)
+        return { list: [], total: 0 }
+      }
+    },
+  })
 const drawerVisible = ref(false)
 const currentPost = ref<Post | null>(null)
 
@@ -141,31 +156,6 @@ const tableColumns = [
   { prop: 'views', label: '浏览量', width: 100 },
   { label: '操作', width: 150, fixed: 'right', slot: 'action' },
 ]
-
-const fetchTableData = async () => {
-  loading.value = true
-  try {
-    const skip = (currentPage.value - 1) * pageSize.value
-    let res
-    const keyword = searchParam.value.title?.trim()
-    if (keyword) {
-      res = await searchPostsAPI(keyword, pageSize.value, skip)
-    } else {
-      res = await getPostsAPI(pageSize.value, skip)
-    }
-    tableData.value = res.posts
-    total.value = res.total
-  } catch (error) {
-    logError('获取帖子失败', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchTableData()
-}
 
 const handleDelete = async (row: Post) => {
   ElMessageBox.confirm(`确定要删除文章 "${row.title}" 吗？`, '警告', {
