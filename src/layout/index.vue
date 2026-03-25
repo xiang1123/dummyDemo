@@ -32,6 +32,10 @@
           <el-icon><KnifeFork /></el-icon>
           <span>食谱管理</span>
         </el-menu-item>
+        <el-menu-item index="/comments">
+          <el-icon><KnifeFork /></el-icon>
+          <span>评论管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
